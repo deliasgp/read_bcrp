@@ -14,6 +14,7 @@ read_bcrp <- function(cseries = "",periodo_ini="",periodo_fin=""){
     datos       <- as.data.frame(lapply(json.temp$periods, function(y) gsub("n.d.", "-99999.99", y)))
     print(json.temp$config$title)
     names(datos) <- c("name",paste("",cseries,"",sep=""))
+    on.exit(close(url))
     return(datos)
 }
 
