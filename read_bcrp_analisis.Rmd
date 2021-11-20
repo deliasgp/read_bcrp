@@ -1,0 +1,61 @@
+---
+title: "read_bcrp_analisis"
+author: "Daniel Gavidia"
+date: "20/11/2021"
+output: pdf_document
+---
+
+## Setup
+
+```{r}
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+source("https://raw.githubusercontent.com/deliasgp/read_bcrp/main/read_bcrp.R")
+library(tidyverse)
+library(kableExtra)
+```
+
+## Metadatos BCRP
+
+Importamos los metadatos del BCRP para los codigos de las series que vamos a importar
+
+```{r}
+url.metadatos <- url("https://estadisticas.bcrp.gob.pe/estadisticas/series/metadata")
+metadatos     <- read.delim(url.metadatos,sep = ";")
+cseries_tc_nominal <- metadatos %>% 
+    filter(grepl("Tipo",Categoría.de.serie) &  Frecuencia=="Diaria" & grepl("TC|US",Nombre.de.serie)) %>% 
+    select(Código.de.serie,Nombre.de.serie,Fecha.de.inicio,Fecha.de.fin)
+kbl(cseries_tc_nominal, booktabs = T)
+```
+
+## Funcion read_bcrp
+
+```{r,tidy = TRUE}
+d_tc_sb_v <- read_bcrp(cseries = "PD04639PD",periodo_ini = "1940-01-01",periodo_fin = "2021-11-20")
+colnames(d_tc_sb_v) <- c("FECHA","SERIE")
+```
+
+## Limpieza de datos
+
+```{r}
+mes <- cbind(unique(substr(d_tc_sb_v$FECHA,4,6)),mes=1:12)  
+mes <- as.data.frame(mes)
+mes <- mes %>% mutate(mes=str_pad(mes,2,pad="0"))
+
+for (i in 1:12) {
+d_tc_sb_v <- d_tc_sb_v %>% mutate(FECHA=gsub(pattern = mes[i,1],replacement = mes[i,2],FECHA))    
+}
+d_tc_sb_v <- d_tc_sb_v %>% mutate(FECHA=as.Date(FECHA, format = "%d.%m.%y"),
+                                  SERIE=as.numeric(SERIE))
+```
+
+## Gráfico
+
+```{r}
+d_tc_sb_v %>%
+    ggplot( aes(x=FECHA, y=SERIE)) +
+    geom_line(color="#69b3a2")  +
+    labs(title="TC Sistema bancario SBS (S/ por US$) - Compra",
+        x ="", y = "TC")+
+    theme_bw()
+```
+
