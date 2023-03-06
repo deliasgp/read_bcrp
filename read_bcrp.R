@@ -1,4 +1,5 @@
 library(jsonlite)
+library(curl)
 read_bcrp <- function(cseries = "",periodo_ini="",periodo_fin=""){
     if(!is.character(cseries)||!is.character(periodo_ini)||!is.character(periodo_fin))
     {stop("Los argumentos de la función deben ser de tipo character")}
@@ -9,7 +10,7 @@ read_bcrp <- function(cseries = "",periodo_ini="",periodo_fin=""){
                           cseries,"/json/",
                           periodo_ini,"/",
                           periodo_fin) 
-    url.bcrp    <- url(api.bcrp)
+    url.bcrp    <- curl(api.bcrp)
     json.temp   <- fromJSON(readLines(url.bcrp, warn="F",encoding = "UTF-8"))
     datos       <- as.data.frame(lapply(json.temp$periods, function(y) gsub("n.d.", "-99999.99", y)))
     print(json.temp$config$title)
